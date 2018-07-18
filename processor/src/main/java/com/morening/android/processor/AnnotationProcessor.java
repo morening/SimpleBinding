@@ -1,54 +1,75 @@
 package com.morening.android.processor;
 
 import com.morening.android.annotation.OnClick;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.tools.JavaFileObject;
 
 @SupportedAnnotationTypes("com.morening.android.annotation.OnClick")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor{
+
+    private Filer mFiler = null;
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnvironment) {
+        super.init(processingEnvironment);
+
+        mFiler = processingEnvironment.getFiler();
+    }
+
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
 
         for (Element element: roundEnvironment.getElementsAnnotatedWith(OnClick.class)) {
-            String packageName = element.getEnclosingElement().toString();
-            String className = element.getEnclosingElement().getSimpleName().toString();
 
-            StringBuilder builder = new StringBuilder()
-                    .append("package com.morening.android.simplebinding;\n\n")
-                    .append("import android.view.View;\n")
-                    .append("import com.morening.android.simplebinding.R;\n")
-                    .append("import " + packageName + ";\n\n")
-                    .append("public class " + className + "_SimpleBinding {\n\n")
-                    .append("\tpublic " + className + "_SimpleBinding(final " + className + " target, View source){\n\n")
-                    .append("\t\tsource.findViewById(")
-                    .append(element.getAnnotation(OnClick.class).viewId())
-                    .append(").setOnClickListener(new View.OnClickListener(){\n\n")
-                    .append("\t\t\t@Override\n")
-                    .append("\t\t\tpublic void onClick(View view){\n")
-                    .append("\t\t\t\ttarget.onClick(view);\n")
-                    .append("\t\t\t}\n")
-                    .append("\t\t});\n")
-                    .append("\t}\n")
-                    .append("}");
+            ClassName targetName = ClassName.get("com.morening.android.simplebinding", "MainActivity");
+            ClassName sourceName = ClassName.get("android.view", "View");
+            ClassName onClickListenerClass = ClassName.get("android.view.View", "OnClickListener");
 
             try {
-                JavaFileObject source = processingEnv.getFiler().createSourceFile("com.morening.android.simplebinding."+ className +"_SimpleBinding");
-                Writer writer = source.openWriter();
-                writer.write(builder.toString());
-                writer.flush();
-                writer.close();
+                TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
+                        .addSuperinterface(onClickListenerClass)
+                        .addMethod(MethodSpec.methodBuilder("onClick")
+                                .addAnnotation(Override.class)
+                                .addModifiers(Modifier.PUBLIC)
+                                .addParameter(sourceName, "view")
+                                .addStatement("$N.onClick(view)", "target")
+                                .build())
+                        .build();
+                MethodSpec constructor = MethodSpec.constructorBuilder()
+                        .addParameter(ParameterSpec.builder(targetName, "target", Modifier.FINAL).build())
+                        .addParameter(ParameterSpec.builder(sourceName, "source").build())
+                        .addModifiers(Modifier.PUBLIC)
+                        .addStatement("$N.findViewById($L).setOnClickListener($L);",
+                                "source",
+                                element.getAnnotation(OnClick.class).viewId(),
+                                onClickListener)
+                        .build();
+
+                TypeSpec clazzSpec = TypeSpec.classBuilder(element.getEnclosingElement().getSimpleName()+"_SimpleBinding")
+                        .addModifiers(Modifier.PUBLIC)
+                        .addMethod(constructor)
+                        .build();
+
+                JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpec).build();
+                javaFile.writeTo(mFiler);
             } catch (IOException e) {
 
             }
