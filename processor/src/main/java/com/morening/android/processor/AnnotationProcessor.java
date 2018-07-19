@@ -42,6 +42,7 @@ public class AnnotationProcessor extends AbstractProcessor{
             ClassName targetName = ClassName.get("com.morening.android.simplebinding", "MainActivity");
             ClassName sourceName = ClassName.get("android.view", "View");
             ClassName onClickListenerClass = ClassName.get("android.view.View", "OnClickListener");
+            ClassName unbinderName = ClassName.get("com.morening.android.simplebinding", "Unbinder");
 
             try {
                 TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
@@ -63,9 +64,17 @@ public class AnnotationProcessor extends AbstractProcessor{
                                 onClickListener)
                         .build();
 
+                MethodSpec unbind = MethodSpec.methodBuilder("unbind")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(void.class)
+                        .addAnnotation(Override.class)
+                        .build();
+
                 TypeSpec clazzSpec = TypeSpec.classBuilder(element.getEnclosingElement().getSimpleName()+"_SimpleBinding")
                         .addModifiers(Modifier.PUBLIC)
+                        .addSuperinterface(unbinderName)
                         .addMethod(constructor)
+                        .addMethod(unbind)
                         .build();
 
                 JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpec).build();

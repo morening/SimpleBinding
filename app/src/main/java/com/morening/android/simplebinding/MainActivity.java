@@ -14,7 +14,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        new MainActivity_SimpleBinding(this, this.getWindow().getDecorView());
+        SimpleBinding.bind(this);
     }
 
 
