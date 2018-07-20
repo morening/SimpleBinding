@@ -3,11 +3,16 @@ package com.morening.android.simplebinding;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.morening.android.annotation.BindView;
 import com.morening.android.annotation.OnClick;
 
 public class MainActivity extends Activity {
+
+    @BindView(id = R.id.result_tv)
+    TextView resultTv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,7 +23,7 @@ public class MainActivity extends Activity {
     }
 
 
-    @OnClick(viewId = R.id.click_btn)
+    @OnClick(id = R.id.click_btn)
     public void onClick(View view){
         Toast.makeText(MainActivity.this, "Clicked "+view.getId(), Toast.LENGTH_LONG).show();
     }

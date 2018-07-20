@@ -23,7 +23,7 @@ android {
     }
 
     libraryVariants.all {
-        it.generateBuildConfig.enabled = false
+        generateBuildConfig.enabled = false
     }
 }
 
