@@ -9,7 +9,10 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -26,6 +29,8 @@ import javax.lang.model.element.TypeElement;
 public class AnnotationProcessor extends AbstractProcessor{
 
     private static final ClassName VIEW =  ClassName.get("android.view", "View");
+    private static final ClassName UNBINDER = ClassName.get("com.morening.android.simplebinding", "Unbinder");
+    private static final ClassName ONCLICKLISTENER = ClassName.get("android.view.View", "OnClickListener");
 
     private Filer mFiler = null;
 
@@ -41,63 +46,154 @@ public class AnnotationProcessor extends AbstractProcessor{
         Set<String> types = new LinkedHashSet<>();
         types.add(OnClick.class.getCanonicalName());
         types.add(BindView.class.getCanonicalName());
+
         return types;
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
 
-//        Map<Element, Map<TypeElement, >>
-//        collectAndParseAllAnnotations(set, roundEnvironment);
+        Map<String, EnclosingElementBinding> enclosingElementBindingMap = new LinkedHashMap<>();
 
-        for (Element element: roundEnvironment.getElementsAnnotatedWith(OnClick.class)) {
+        collectAndParseAllAnnotations(enclosingElementBindingMap, roundEnvironment);
+        processAllAnnotations(enclosingElementBindingMap);
+
+        return true;
+    }
+
+    private void processAllAnnotations(Map<String, EnclosingElementBinding> enclosingElementBindingMap) {
+
+        for (Map.Entry entry: enclosingElementBindingMap.entrySet()){
+            EnclosingElementBinding enclosingElementBinding = (EnclosingElementBinding) entry.getValue();
+            Element element = enclosingElementBinding.element;
+
             String packageName = getPackageName(element.getEnclosingElement());
             String targetName = element.getEnclosingElement().getSimpleName().toString();
             ClassName targetClassName = ClassName.get(packageName, targetName);
-            ClassName onClickListenerClassName = ClassName.get("android.view.View", "OnClickListener");
-            ClassName unbinderClassName = ClassName.get("com.morening.android.simplebinding", "Unbinder");
+
+            TypeSpec.Builder clazzSpecBuilder = TypeSpec.classBuilder(targetName+"_SimpleBinding")
+                    .addModifiers(Modifier.PUBLIC)
+                    .addSuperinterface(UNBINDER);
+
+            MethodSpec.Builder constructorBuilder = MethodSpec.constructorBuilder()
+                    .addParameter(ParameterSpec.builder(targetClassName, "target", Modifier.FINAL).build())
+                    .addParameter(ParameterSpec.builder(VIEW, "source").build())
+                    .addModifiers(Modifier.PUBLIC);
+
+            Map<Class<?>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            for (Map.Entry typeEntry: typeElementBindingMap.entrySet()){
+                Class typeElement = (Class) typeEntry.getKey();
+                TypeElementBinding typeElementBinding = (TypeElementBinding) typeEntry.getValue();
+
+                List<BindingElement> bindingElementList = typeElementBinding.bindingElementList;
+                for (BindingElement bindingElement: bindingElementList){
+                    String objectName = bindingElement.objectName;
+                    int value = bindingElement.value;
+
+                    if (typeElement == OnClick.class){
+                        TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
+                                .addSuperinterface(ONCLICKLISTENER)
+                                .addMethod(MethodSpec.methodBuilder("onClick")
+                                        .addAnnotation(Override.class)
+                                        .addModifiers(Modifier.PUBLIC)
+                                        .addParameter(VIEW, "view")
+                                        .addStatement("$N.$L(view)", "target", objectName)
+                                        .build())
+                                .build();
+
+                        constructorBuilder.addStatement("$N.findViewById($L).setOnClickListener($L)",
+                                "source",
+                                value,
+                                onClickListener);
+                    } else if (typeElement == BindView.class){
+                        constructorBuilder.addStatement("$N.$L = $N.findViewById($L)",
+                                "target",
+                                objectName,
+                                "source",
+                                value);
+                    }
+                }
+            }
+
+            MethodSpec unbind = MethodSpec.methodBuilder("unbind")
+                    .addModifiers(Modifier.PUBLIC)
+                    .returns(void.class)
+                    .addAnnotation(Override.class)
+                    .build();
+
+            clazzSpecBuilder.addMethod(constructorBuilder.build())
+                    .addMethod(unbind)
+                    .build();
 
             try {
-                TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
-                        .addSuperinterface(onClickListenerClassName)
-                        .addMethod(MethodSpec.methodBuilder("onClick")
-                                .addAnnotation(Override.class)
-                                .addModifiers(Modifier.PUBLIC)
-                                .addParameter(VIEW, "view")
-                                .addStatement("$N.onClick(view)", "target")
-                                .build())
-                        .build();
-                MethodSpec constructor = MethodSpec.constructorBuilder()
-                        .addParameter(ParameterSpec.builder(targetClassName, "target", Modifier.FINAL).build())
-                        .addParameter(ParameterSpec.builder(VIEW, "source").build())
-                        .addModifiers(Modifier.PUBLIC)
-                        .addStatement("$N.findViewById($L).setOnClickListener($L);",
-                                "source",
-                                element.getAnnotation(OnClick.class).id(),
-                                onClickListener)
-                        .build();
-
-                MethodSpec unbind = MethodSpec.methodBuilder("unbind")
-                        .addModifiers(Modifier.PUBLIC)
-                        .returns(void.class)
-                        .addAnnotation(Override.class)
-                        .build();
-
-                TypeSpec clazzSpec = TypeSpec.classBuilder(element.getEnclosingElement().getSimpleName()+"_SimpleBinding")
-                        .addModifiers(Modifier.PUBLIC)
-                        .addSuperinterface(unbinderClassName)
-                        .addMethod(constructor)
-                        .addMethod(unbind)
-                        .build();
-
-                JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpec).build();
+                JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpecBuilder.build()).build();
                 javaFile.writeTo(mFiler);
             } catch (IOException e) {
 
             }
         }
+    }
 
-        return true;
+    private void collectAndParseAllAnnotations(
+            Map<String, EnclosingElementBinding> enclosingElementBindingMap,
+            RoundEnvironment roundEnvironment) {
+
+        collectAndParseOnClick(enclosingElementBindingMap, roundEnvironment);
+        collectAndParseBindView(enclosingElementBindingMap, roundEnvironment);
+    }
+
+    private void collectAndParseBindView(
+            Map<String, EnclosingElementBinding> enclosingElementBindingMap,
+            RoundEnvironment roundEnvironment) {
+
+        for (Element element: roundEnvironment.getElementsAnnotatedWith(BindView.class)){
+            String enclosingElementKey = element.getEnclosingElement().toString();
+            EnclosingElementBinding enclosingElementBinding = enclosingElementBindingMap.get(enclosingElementKey);
+            if (enclosingElementBinding == null){
+                enclosingElementBinding = new EnclosingElementBinding();
+                enclosingElementBinding.element = element;
+                enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
+            }
+            Map<Class<?>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            TypeElementBinding typeElementBinding = typeElementBindingMap.get(BindView.class);
+            if (typeElementBinding == null){
+                typeElementBinding = new TypeElementBinding();
+                typeElementBinding.typeElement = BindView.class;
+                typeElementBindingMap.put(BindView.class, typeElementBinding);
+            }
+            List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
+            BindingElement bindingElement = new BindingElement();
+            bindingElement.objectName = element.getSimpleName().toString();
+            bindingElement.value = element.getAnnotation(BindView.class).id();
+            bindElementList.add(bindingElement);
+        }
+    }
+
+    private void collectAndParseOnClick(
+            Map<String, EnclosingElementBinding> enclosingElementBindingMap,
+            RoundEnvironment roundEnvironment) {
+
+        for (Element element: roundEnvironment.getElementsAnnotatedWith(OnClick.class)){
+            String enclosingElementKey = element.getEnclosingElement().toString();
+            EnclosingElementBinding enclosingElementBinding = enclosingElementBindingMap.get(enclosingElementKey);
+            if (enclosingElementBinding == null){
+                enclosingElementBinding = new EnclosingElementBinding();
+                enclosingElementBinding.element = element;
+                enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
+            }
+            Map<Class<?>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            TypeElementBinding typeElementBinding = typeElementBindingMap.get(OnClick.class);
+            if (typeElementBinding == null){
+                typeElementBinding = new TypeElementBinding();
+                typeElementBinding.typeElement = OnClick.class;
+                typeElementBindingMap.put(OnClick.class, typeElementBinding);
+            }
+            List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
+            BindingElement bindingElement = new BindingElement();
+            bindingElement.objectName = element.getSimpleName().toString();
+            bindingElement.value = element.getAnnotation(OnClick.class).id();
+            bindElementList.add(bindingElement);
+        }
     }
 
     private String getPackageName(Element enclosingElement) {

@@ -11,6 +11,8 @@ import com.morening.android.annotation.OnClick;
 
 public class MainActivity extends Activity {
 
+    Unbinder unbinder = null;
+
     @BindView(id = R.id.result_tv)
     TextView resultTv;
 
@@ -19,12 +21,23 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SimpleBinding.bind(this);
+        unbinder = SimpleBinding.bind(this);
     }
 
 
     @OnClick(id = R.id.click_btn)
-    public void onClick(View view){
+    public void showToast(View view){
         Toast.makeText(MainActivity.this, "Clicked "+view.getId(), Toast.LENGTH_LONG).show();
+    }
+
+    @OnClick(id = R.id.result_tv)
+    public void changeText(View view){
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        unbinder.unbind();
+        super.onDestroy();
     }
 }
