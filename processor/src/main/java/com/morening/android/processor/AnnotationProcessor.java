@@ -2,6 +2,10 @@ package com.morening.android.processor;
 
 import com.morening.android.annotation.BindView;
 import com.morening.android.annotation.OnClick;
+import com.morening.android.processor.element.BindingElement;
+import com.morening.android.processor.element.EnclosingElementBinding;
+import com.morening.android.processor.element.TypeElementBinding;
+import com.morening.android.processor.exception.IllegalArgumentsException;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -17,6 +21,7 @@ import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
@@ -24,6 +29,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor{
@@ -32,12 +38,14 @@ public class AnnotationProcessor extends AbstractProcessor{
     private static final ClassName UNBINDER = ClassName.get("com.morening.android.simplebinding", "Unbinder");
     private static final ClassName ONCLICKLISTENER = ClassName.get("android.view.View", "OnClickListener");
 
+    private Messager mMessager = null;
     private Filer mFiler = null;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
 
+        mMessager = processingEnvironment.getMessager();
         mFiler = processingEnvironment.getFiler();
     }
 
@@ -55,10 +63,16 @@ public class AnnotationProcessor extends AbstractProcessor{
 
         Map<String, EnclosingElementBinding> enclosingElementBindingMap = new LinkedHashMap<>();
 
-        collectAndParseAllAnnotations(enclosingElementBindingMap, roundEnvironment);
-        processAllAnnotations(enclosingElementBindingMap);
+        try {
+            collectAndParseAllAnnotations(enclosingElementBindingMap, roundEnvironment);
+            processAllAnnotations(enclosingElementBindingMap);
 
-        return true;
+            return true;
+        } catch (IllegalArgumentsException e) {
+            mMessager.printMessage(Diagnostic.Kind.ERROR, e.getMessage());
+        }
+
+        return false;
     }
 
     private void processAllAnnotations(Map<String, EnclosingElementBinding> enclosingElementBindingMap) {
@@ -140,7 +154,7 @@ public class AnnotationProcessor extends AbstractProcessor{
 
     private void collectAndParseAllAnnotations(
             Map<String, EnclosingElementBinding> enclosingElementBindingMap,
-            RoundEnvironment roundEnvironment) {
+            RoundEnvironment roundEnvironment) throws IllegalArgumentsException {
 
         collectAndParseOnClick(enclosingElementBindingMap, roundEnvironment);
         collectAndParseBindView(enclosingElementBindingMap, roundEnvironment);
@@ -148,7 +162,7 @@ public class AnnotationProcessor extends AbstractProcessor{
 
     private void collectAndParseBindView(
             Map<String, EnclosingElementBinding> enclosingElementBindingMap,
-            RoundEnvironment roundEnvironment) {
+            RoundEnvironment roundEnvironment) throws IllegalArgumentsException {
 
         for (Element element: roundEnvironment.getElementsAnnotatedWith(BindView.class)){
             String enclosingElementKey = element.getEnclosingElement().toString();
@@ -169,13 +183,17 @@ public class AnnotationProcessor extends AbstractProcessor{
             BindingElement bindingElement = new BindingElement();
             bindingElement.objectName = element.getSimpleName().toString();
             bindingElement.values = element.getAnnotation(BindView.class).id();
+            if (bindingElement.values.length == 0){
+                throw new IllegalArgumentsException(
+                        "Binding element should be attached with a view id at least!");
+            }
             bindElementList.add(bindingElement);
         }
     }
 
     private void collectAndParseOnClick(
             Map<String, EnclosingElementBinding> enclosingElementBindingMap,
-            RoundEnvironment roundEnvironment) {
+            RoundEnvironment roundEnvironment) throws IllegalArgumentsException {
 
         for (Element element: roundEnvironment.getElementsAnnotatedWith(OnClick.class)){
             String enclosingElementKey = element.getEnclosingElement().toString();
@@ -196,6 +214,10 @@ public class AnnotationProcessor extends AbstractProcessor{
             BindingElement bindingElement = new BindingElement();
             bindingElement.objectName = element.getSimpleName().toString();
             bindingElement.values = element.getAnnotation(OnClick.class).id();
+            if (bindingElement.values.length == 0){
+                throw new IllegalArgumentsException(
+                        "Binding element should be attached with a view id at least!");
+            }
             bindElementList.add(bindingElement);
         }
     }
