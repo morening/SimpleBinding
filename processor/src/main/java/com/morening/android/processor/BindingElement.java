@@ -7,5 +7,5 @@ class BindingElement {
 
     String objectName = null;
 
-    int value = 0;
+    int[] values = null;
 }

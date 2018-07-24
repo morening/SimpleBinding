@@ -10,15 +10,34 @@
         android:layout_width="160dp"
         android:layout_height="30dp"
         android:layout_centerInParent="true"
+        android:gravity="center"
         android:text="Hello"/>
 
     <Button
-        android:id="@+id/click_btn"
+        android:id="@+id/click_btn0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@+id/click_btn1"
+        android:layout_alignBaseline="@+id/click_btn1"
+        android:layout_marginRight="30dp"
+        android:text="CLICK0"/>
+
+    <Button
+        android:id="@+id/click_btn1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/result_tv"
         android:layout_marginTop="30dp"
         android:layout_centerHorizontal="true"
-        android:text="CLICK"/>
+        android:text="CLICK1"/>
+
+    <Button
+        android:id="@+id/click_btn2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/click_btn1"
+        android:layout_alignBaseline="@+id/click_btn1"
+        android:layout_marginLeft="30dp"
+        android:text="CLICK2"/>
 
 </RelativeLayout>

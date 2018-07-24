@@ -88,29 +88,33 @@ public class AnnotationProcessor extends AbstractProcessor{
                 List<BindingElement> bindingElementList = typeElementBinding.bindingElementList;
                 for (BindingElement bindingElement: bindingElementList){
                     String objectName = bindingElement.objectName;
-                    int value = bindingElement.value;
+                    int[] values = bindingElement.values;
 
                     if (typeElement == OnClick.class){
-                        TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
-                                .addSuperinterface(ONCLICKLISTENER)
-                                .addMethod(MethodSpec.methodBuilder("onClick")
-                                        .addAnnotation(Override.class)
-                                        .addModifiers(Modifier.PUBLIC)
-                                        .addParameter(VIEW, "view")
-                                        .addStatement("$N.$L(view)", "target", objectName)
-                                        .build())
-                                .build();
+                        for (int value: values){
+                            TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
+                                    .addSuperinterface(ONCLICKLISTENER)
+                                    .addMethod(MethodSpec.methodBuilder("onClick")
+                                            .addAnnotation(Override.class)
+                                            .addModifiers(Modifier.PUBLIC)
+                                            .addParameter(VIEW, "view")
+                                            .addStatement("$N.$L(view)", "target", objectName)
+                                            .build())
+                                    .build();
 
-                        constructorBuilder.addStatement("$N.findViewById($L).setOnClickListener($L)",
-                                "source",
-                                value,
-                                onClickListener);
+                            constructorBuilder.addStatement("$N.findViewById($L).setOnClickListener($L)",
+                                    "source",
+                                    value,
+                                    onClickListener);
+                        }
                     } else if (typeElement == BindView.class){
-                        constructorBuilder.addStatement("$N.$L = $N.findViewById($L)",
-                                "target",
-                                objectName,
-                                "source",
-                                value);
+                        for (int value: values){
+                            constructorBuilder.addStatement("$N.$L = $N.findViewById($L)",
+                                    "target",
+                                    objectName,
+                                    "source",
+                                    value);
+                        }
                     }
                 }
             }
@@ -164,7 +168,7 @@ public class AnnotationProcessor extends AbstractProcessor{
             List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
             BindingElement bindingElement = new BindingElement();
             bindingElement.objectName = element.getSimpleName().toString();
-            bindingElement.value = element.getAnnotation(BindView.class).id();
+            bindingElement.values = element.getAnnotation(BindView.class).id();
             bindElementList.add(bindingElement);
         }
     }
@@ -191,7 +195,7 @@ public class AnnotationProcessor extends AbstractProcessor{
             List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
             BindingElement bindingElement = new BindingElement();
             bindingElement.objectName = element.getSimpleName().toString();
-            bindingElement.value = element.getAnnotation(OnClick.class).id();
+            bindingElement.values = element.getAnnotation(OnClick.class).id();
             bindElementList.add(bindingElement);
         }
     }

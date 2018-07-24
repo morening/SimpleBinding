@@ -25,14 +25,14 @@ public class MainActivity extends Activity {
     }
 
 
-    @OnClick(id = R.id.click_btn)
+    @OnClick(id = {R.id.click_btn0, R.id.click_btn1, R.id.click_btn2})
     public void showToast(View view){
         Toast.makeText(MainActivity.this, "Clicked "+view.getId(), Toast.LENGTH_LONG).show();
     }
 
     @OnClick(id = R.id.result_tv)
     public void changeText(View view){
-
+        resultTv.setText("World");
     }
 
     @Override

@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface BindView {
 
-    int id() default 0;
+    int[] id() default {};
 }
