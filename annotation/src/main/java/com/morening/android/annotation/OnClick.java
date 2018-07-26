@@ -8,8 +8,17 @@ import java.lang.annotation.Target;
 /**
  * Created by morening on 2018/7/17.
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
+@ListenerClass(
+        targetType = "android.view.View",
+        setter = "setOnClickListener",
+        type = "android.view.View",
+        methods = @ListenerMethod(
+                name = "onClick",
+                parameters = {"android.view.View"}
+        )
+)
 public @interface OnClick {
 
     int[] id() default {};

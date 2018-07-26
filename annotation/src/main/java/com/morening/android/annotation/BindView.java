@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Created by morening on 2018/7/20.
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.FIELD)
 public @interface BindView {
 
