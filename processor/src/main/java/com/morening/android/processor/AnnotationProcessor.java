@@ -1,6 +1,8 @@
 package com.morening.android.processor;
 
 import com.morening.android.annotation.BindView;
+import com.morening.android.annotation.ListenerClass;
+import com.morening.android.annotation.ListenerMethod;
 import com.morening.android.annotation.OnClick;
 import com.morening.android.processor.element.BindingElement;
 import com.morening.android.processor.element.EnclosingElementBinding;
@@ -13,6 +15,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -94,9 +97,9 @@ public class AnnotationProcessor extends AbstractProcessor{
                     .addParameter(ParameterSpec.builder(VIEW, "source").build())
                     .addModifiers(Modifier.PUBLIC);
 
-            Map<Class<?>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
             for (Map.Entry typeEntry: typeElementBindingMap.entrySet()){
-                Class typeElement = (Class) typeEntry.getKey();
+                Class<? extends Annotation> typeElement = (Class<? extends Annotation>) typeEntry.getKey();
                 TypeElementBinding typeElementBinding = (TypeElementBinding) typeEntry.getValue();
 
                 List<BindingElement> bindingElementList = typeElementBinding.bindingElementList;
@@ -105,21 +108,30 @@ public class AnnotationProcessor extends AbstractProcessor{
                     int[] values = bindingElement.values;
 
                     if (typeElement == OnClick.class){
+                        ListenerClass listener = typeElement.getAnnotation(ListenerClass.class);
+                        String targetType = listener.targetType();
+                        String setter = listener.setter();
+                        String type = listener.type();
+                        ListenerMethod[] methods = listener.methods();
                         for (int value: values){
-                            TypeSpec onClickListener = TypeSpec.anonymousClassBuilder("")
-                                    .addSuperinterface(ONCLICKLISTENER)
-                                    .addMethod(MethodSpec.methodBuilder("onClick")
-                                            .addAnnotation(Override.class)
-                                            .addModifiers(Modifier.PUBLIC)
-                                            .addParameter(VIEW, "view")
-                                            .addStatement("$N.$L(view)", "target", objectName)
-                                            .build())
-                                    .build();
 
-                            constructorBuilder.addStatement("$N.findViewById($L).setOnClickListener($L)",
-                                    "source",
+                            TypeSpec.Builder listenerBuilder = TypeSpec.anonymousClassBuilder("")
+                                    .addSuperinterface(convert2ClassName(type));
+                            for (ListenerMethod method: methods){
+                                MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.name())
+                                        .addAnnotation(Override.class)
+                                        .addModifiers(Modifier.PUBLIC);
+                                for (String parameter: method.parameters()){
+                                    methodBuilder.addParameter(convert2ClassName(parameter), "view");
+                                }
+                                methodBuilder.addStatement("target.$L(view)", objectName);
+                                listenerBuilder.addMethod(methodBuilder.build());
+                            }
+
+                            constructorBuilder.addStatement("source.findViewById($L).$L($L)",
                                     value,
-                                    onClickListener);
+                                    setter,
+                                    listenerBuilder.build());
                         }
                     } else if (typeElement == BindView.class){
                         for (int value: values){
@@ -172,7 +184,7 @@ public class AnnotationProcessor extends AbstractProcessor{
                 enclosingElementBinding.element = element;
                 enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
             }
-            Map<Class<?>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
             TypeElementBinding typeElementBinding = typeElementBindingMap.get(BindView.class);
             if (typeElementBinding == null){
                 typeElementBinding = new TypeElementBinding();
@@ -203,7 +215,7 @@ public class AnnotationProcessor extends AbstractProcessor{
                 enclosingElementBinding.element = element;
                 enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
             }
-            Map<Class<?>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
             TypeElementBinding typeElementBinding = typeElementBindingMap.get(OnClick.class);
             if (typeElementBinding == null){
                 typeElementBinding = new TypeElementBinding();
@@ -223,9 +235,25 @@ public class AnnotationProcessor extends AbstractProcessor{
     }
 
     private String getPackageName(Element enclosingElement) {
-        String temp = enclosingElement.toString();
-        int lastIndex = temp.lastIndexOf(".");
+        String className = enclosingElement.toString();
 
-        return temp.substring(0, lastIndex);
+        return getPackageName(className);
+    }
+
+    private String getPackageName(String className){
+        int lastIndex = className.lastIndexOf(".");
+
+        return className.substring(0, lastIndex);
+    }
+
+    private String getSimpleName(String className){
+        int lastIndex = className.lastIndexOf(".");
+
+        return className.substring(lastIndex+1);
+    }
+
+
+    private ClassName convert2ClassName(String className){
+        return ClassName.get(getPackageName(className), getSimpleName(className));
     }
 }

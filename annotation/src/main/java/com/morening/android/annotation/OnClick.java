@@ -8,12 +8,12 @@ import java.lang.annotation.Target;
 /**
  * Created by morening on 2018/7/17.
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 @ListenerClass(
         targetType = "android.view.View",
         setter = "setOnClickListener",
-        type = "android.view.View",
+        type = "android.view.View.OnClickListener",
         methods = @ListenerMethod(
                 name = "onClick",
                 parameters = {"android.view.View"}

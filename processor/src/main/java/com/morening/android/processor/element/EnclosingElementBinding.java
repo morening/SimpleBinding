@@ -1,5 +1,6 @@
 package com.morening.android.processor.element;
 
+import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -12,5 +13,5 @@ public class EnclosingElementBinding {
 
     public Element element = null;
 
-    public Map<Class<?>, TypeElementBinding> typeElementBindingMap = new LinkedHashMap<>();
+    public Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = new LinkedHashMap<>();
 }
