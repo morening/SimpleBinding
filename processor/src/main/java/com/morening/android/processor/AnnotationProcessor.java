@@ -16,6 +16,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -80,12 +81,12 @@ public class AnnotationProcessor extends AbstractProcessor{
 
     private void processAllAnnotations(Map<String, EnclosingElementBinding> enclosingElementBindingMap) {
 
-        for (Map.Entry entry: enclosingElementBindingMap.entrySet()){
-            EnclosingElementBinding enclosingElementBinding = (EnclosingElementBinding) entry.getValue();
-            Element element = enclosingElementBinding.element;
+        for (Map.Entry enclosingEntry: enclosingElementBindingMap.entrySet()){
+            String enclosingElementKey = (String) enclosingEntry.getKey();
+            EnclosingElementBinding enclosingElementBinding = (EnclosingElementBinding) enclosingEntry.getValue();
 
-            String packageName = getPackageName(element.getEnclosingElement());
-            String targetName = element.getEnclosingElement().getSimpleName().toString();
+            String packageName = getPackageName(enclosingElementKey);
+            String targetName = getSimpleName(enclosingElementKey);
             ClassName targetClassName = ClassName.get(packageName, targetName);
 
             TypeSpec.Builder clazzSpecBuilder = TypeSpec.classBuilder(targetName+"_SimpleBinding")
@@ -97,24 +98,26 @@ public class AnnotationProcessor extends AbstractProcessor{
                     .addParameter(ParameterSpec.builder(VIEW, "source").build())
                     .addModifiers(Modifier.PUBLIC);
 
-            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap =
+                    enclosingElementBinding.typeElementBindingMap;
             for (Map.Entry typeEntry: typeElementBindingMap.entrySet()){
-                Class<? extends Annotation> typeElement = (Class<? extends Annotation>) typeEntry.getKey();
+                Class<? extends Annotation> typeEntryKey = (Class<? extends Annotation>) typeEntry.getKey();
                 TypeElementBinding typeElementBinding = (TypeElementBinding) typeEntry.getValue();
 
                 List<BindingElement> bindingElementList = typeElementBinding.bindingElementList;
                 for (BindingElement bindingElement: bindingElementList){
+                    Element element = bindingElement.element;
                     String objectName = bindingElement.objectName;
-                    int[] values = bindingElement.values;
 
-                    if (typeElement == OnClick.class){
-                        ListenerClass listener = typeElement.getAnnotation(ListenerClass.class);
+                    if (typeEntryKey == OnClick.class){
+                        ListenerClass listener = typeEntryKey.getAnnotation(ListenerClass.class);
                         String targetType = listener.targetType();
                         String setter = listener.setter();
                         String type = listener.type();
                         ListenerMethod[] methods = listener.methods();
-                        for (int value: values){
 
+                        int[] values = element.getAnnotation(OnClick.class).id();
+                        for (int value: values){
                             TypeSpec.Builder listenerBuilder = TypeSpec.anonymousClassBuilder("")
                                     .addSuperinterface(convert2ClassName(type));
                             for (ListenerMethod method: methods){
@@ -133,12 +136,11 @@ public class AnnotationProcessor extends AbstractProcessor{
                                     setter,
                                     listenerBuilder.build());
                         }
-                    } else if (typeElement == BindView.class){
+                    } else if (typeEntryKey == BindView.class){
+                        int[] values = element.getAnnotation(BindView.class).id();
                         for (int value: values){
-                            constructorBuilder.addStatement("$N.$L = $N.findViewById($L)",
-                                    "target",
+                            constructorBuilder.addStatement("target.$L = source.findViewById($L)",
                                     objectName,
-                                    "source",
                                     value);
                         }
                     }
@@ -156,7 +158,9 @@ public class AnnotationProcessor extends AbstractProcessor{
                     .build();
 
             try {
-                JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpecBuilder.build()).build();
+                JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpecBuilder.build())
+                        .addFileComment("This Java file was created by SimpleBingding.\nPlease don't edit it.")
+                        .build();
                 javaFile.writeTo(mFiler);
             } catch (IOException e) {
 
@@ -178,13 +182,17 @@ public class AnnotationProcessor extends AbstractProcessor{
 
         for (Element element: roundEnvironment.getElementsAnnotatedWith(BindView.class)){
             String enclosingElementKey = element.getEnclosingElement().toString();
+
             EnclosingElementBinding enclosingElementBinding = enclosingElementBindingMap.get(enclosingElementKey);
             if (enclosingElementBinding == null){
                 enclosingElementBinding = new EnclosingElementBinding();
-                enclosingElementBinding.element = element;
                 enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
             }
             Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            if (typeElementBindingMap == null){
+                typeElementBindingMap = new LinkedHashMap<>();
+                enclosingElementBinding.typeElementBindingMap = typeElementBindingMap;
+            }
             TypeElementBinding typeElementBinding = typeElementBindingMap.get(BindView.class);
             if (typeElementBinding == null){
                 typeElementBinding = new TypeElementBinding();
@@ -192,12 +200,22 @@ public class AnnotationProcessor extends AbstractProcessor{
                 typeElementBindingMap.put(BindView.class, typeElementBinding);
             }
             List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
+            if (bindElementList == null){
+                bindElementList = new ArrayList<>();
+                typeElementBinding.bindingElementList = bindElementList;
+            }
             BindingElement bindingElement = new BindingElement();
+            bindingElement.element = element;
             bindingElement.objectName = element.getSimpleName().toString();
-            bindingElement.values = element.getAnnotation(BindView.class).id();
-            if (bindingElement.values.length == 0){
+
+            int[] ids = element.getAnnotation(BindView.class).id();
+            if (ids.length == 0){
                 throw new IllegalArgumentsException(
                         "Binding element should be attached with a view id at least!");
+            }
+            if (ids.length > 1){
+                throw new IllegalArgumentsException(
+                        "Binding element shouldn't be attached with more than one id!");
             }
             bindElementList.add(bindingElement);
         }
@@ -209,13 +227,18 @@ public class AnnotationProcessor extends AbstractProcessor{
 
         for (Element element: roundEnvironment.getElementsAnnotatedWith(OnClick.class)){
             String enclosingElementKey = element.getEnclosingElement().toString();
+
             EnclosingElementBinding enclosingElementBinding = enclosingElementBindingMap.get(enclosingElementKey);
             if (enclosingElementBinding == null){
                 enclosingElementBinding = new EnclosingElementBinding();
-                enclosingElementBinding.element = element;
                 enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
             }
-            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap =
+                    enclosingElementBinding.typeElementBindingMap;
+            if (typeElementBindingMap == null){
+                typeElementBindingMap = new LinkedHashMap<>();
+                enclosingElementBinding.typeElementBindingMap = typeElementBindingMap;
+            }
             TypeElementBinding typeElementBinding = typeElementBindingMap.get(OnClick.class);
             if (typeElementBinding == null){
                 typeElementBinding = new TypeElementBinding();
@@ -223,21 +246,21 @@ public class AnnotationProcessor extends AbstractProcessor{
                 typeElementBindingMap.put(OnClick.class, typeElementBinding);
             }
             List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
+            if (bindElementList == null){
+                bindElementList = new ArrayList<>();
+                typeElementBinding.bindingElementList = bindElementList;
+            }
             BindingElement bindingElement = new BindingElement();
+            bindingElement.element = element;
             bindingElement.objectName = element.getSimpleName().toString();
-            bindingElement.values = element.getAnnotation(OnClick.class).id();
-            if (bindingElement.values.length == 0){
+
+            int[] ids = element.getAnnotation(OnClick.class).id();
+            if (ids.length == 0){
                 throw new IllegalArgumentsException(
                         "Binding element should be attached with a view id at least!");
             }
             bindElementList.add(bindingElement);
         }
-    }
-
-    private String getPackageName(Element enclosingElement) {
-        String className = enclosingElement.toString();
-
-        return getPackageName(className);
     }
 
     private String getPackageName(String className){

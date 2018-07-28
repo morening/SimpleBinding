@@ -10,5 +10,5 @@ public class TypeElementBinding {
 
     public Class<?> typeElement = null;
 
-    public List<BindingElement> bindingElementList = new LinkedList<>();
+    public List<BindingElement> bindingElementList = null;
 }

@@ -11,7 +11,5 @@ import javax.lang.model.element.Element;
  */
 public class EnclosingElementBinding {
 
-    public Element element = null;
-
-    public Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = new LinkedHashMap<>();
+    public Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = null;
 }
