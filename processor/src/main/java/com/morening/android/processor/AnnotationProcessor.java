@@ -1,5 +1,6 @@
 package com.morening.android.processor;
 
+import com.morening.android.annotation.BindString;
 import com.morening.android.annotation.BindView;
 import com.morening.android.annotation.ListenerClass;
 import com.morening.android.annotation.ListenerMethod;
@@ -58,6 +59,7 @@ public class AnnotationProcessor extends AbstractProcessor{
         Set<String> types = new LinkedHashSet<>();
         types.add(OnClick.class.getCanonicalName());
         types.add(BindView.class.getCanonicalName());
+        types.add(BindString.class.getCanonicalName());
 
         return types;
     }
@@ -143,6 +145,11 @@ public class AnnotationProcessor extends AbstractProcessor{
                                     objectName,
                                     value);
                         }
+                    } else if (typeEntryKey == BindString.class){
+                        String value = element.getAnnotation(BindString.class).value();
+                        constructorBuilder.addStatement("target.$L = $S",
+                                objectName,
+                                value);
                     }
                 }
             }
@@ -174,6 +181,48 @@ public class AnnotationProcessor extends AbstractProcessor{
 
         collectAndParseOnClick(enclosingElementBindingMap, roundEnvironment);
         collectAndParseBindView(enclosingElementBindingMap, roundEnvironment);
+        collectAndParseBindString(enclosingElementBindingMap, roundEnvironment);
+    }
+
+    private void collectAndParseBindString(
+            Map<String, EnclosingElementBinding> enclosingElementBindingMap,
+            RoundEnvironment roundEnvironment) throws IllegalArgumentsException {
+
+        for (Element element: roundEnvironment.getElementsAnnotatedWith(BindString.class)){
+            String enclosingElementKey = element.getEnclosingElement().toString();
+
+            EnclosingElementBinding enclosingElementBinding = enclosingElementBindingMap.get(enclosingElementKey);
+            if (enclosingElementBinding == null){
+                enclosingElementBinding = new EnclosingElementBinding();
+                enclosingElementBindingMap.put(enclosingElementKey, enclosingElementBinding);
+            }
+            Map<Class<? extends Annotation>, TypeElementBinding> typeElementBindingMap = enclosingElementBinding.typeElementBindingMap;
+            if (typeElementBindingMap == null){
+                typeElementBindingMap = new LinkedHashMap<>();
+                enclosingElementBinding.typeElementBindingMap = typeElementBindingMap;
+            }
+            TypeElementBinding typeElementBinding = typeElementBindingMap.get(BindString.class);
+            if (typeElementBinding == null){
+                typeElementBinding = new TypeElementBinding();
+                typeElementBinding.typeElement = BindString.class;
+                typeElementBindingMap.put(BindString.class, typeElementBinding);
+            }
+            List<BindingElement> bindElementList = typeElementBinding.bindingElementList;
+            if (bindElementList == null){
+                bindElementList = new ArrayList<>();
+                typeElementBinding.bindingElementList = bindElementList;
+            }
+            BindingElement bindingElement = new BindingElement();
+            bindingElement.element = element;
+            bindingElement.objectName = element.getSimpleName().toString();
+
+            String str = element.getAnnotation(BindString.class).value();
+            if (str == null){
+                throw new IllegalArgumentsException(
+                        "Binding element should be attached with a String object!");
+            }
+            bindElementList.add(bindingElement);
+        }
     }
 
     private void collectAndParseBindView(

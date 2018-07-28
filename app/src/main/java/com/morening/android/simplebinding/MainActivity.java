@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.morening.android.annotation.BindString;
 import com.morening.android.annotation.BindView;
 import com.morening.android.annotation.OnClick;
 
@@ -15,6 +16,9 @@ public class MainActivity extends Activity {
 
     @BindView(id = R.id.result_tv)
     TextView resultTv;
+
+    @BindString(value = "Hello SimpleBinding~")
+    String result;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +36,7 @@ public class MainActivity extends Activity {
 
     @OnClick(id = R.id.result_tv)
     public void changeText(View view){
-        resultTv.setText("World");
+        resultTv.setText(result);
     }
 
     @Override
