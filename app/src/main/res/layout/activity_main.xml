@@ -17,27 +17,27 @@
         android:id="@+id/click_btn0"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toStartOf="@+id/click_btn1"
+        android:layout_toLeftOf="@+id/click_btn1"
         android:layout_alignBaseline="@+id/click_btn1"
-        android:layout_marginEnd="@dimen/app_dimen_30dp"
-        android:text="@string/app_click0"/>
+        android:layout_marginRight="30dp"
+        android:text="CLICK0"/>
 
     <Button
         android:id="@+id/click_btn1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/result_tv"
-        android:layout_marginTop="@dimen/app_dimen_30dp"
+        android:layout_marginTop="30dp"
         android:layout_centerHorizontal="true"
-        android:text="@string/app_click1"/>
+        android:text="CLICK1"/>
 
     <Button
         android:id="@+id/click_btn2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/click_btn1"
+        android:layout_toRightOf="@id/click_btn1"
         android:layout_alignBaseline="@+id/click_btn1"
-        android:layout_marginStart="30dp"
-        android:text="@string/app_click2"/>
+        android:layout_marginLeft="30dp"
+        android:text="CLICK2"/>
 
 </RelativeLayout>

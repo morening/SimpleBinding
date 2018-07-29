@@ -1,7 +1,3 @@
 <resources>
     <string name="app_name">SimpleBinding</string>
-    <string name="app_click0">CLICK0</string>
-    <string name="app_click1">CLICK1</string>
-    <string name="app_click2">CLICK2</string>
-    <string name="app_back">BACK</string>
 </resources>
