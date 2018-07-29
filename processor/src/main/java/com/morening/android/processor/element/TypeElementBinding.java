@@ -1,6 +1,5 @@
 package com.morening.android.processor.element;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**

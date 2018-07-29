@@ -12,7 +12,7 @@ import com.morening.android.annotation.OnClick;
 
 public class MainActivity extends Activity {
 
-    Unbinder unbinder = null;
+    private Unbinder unbinder = null;
 
     @BindView(id = R.id.result_tv)
     TextView resultTv;
