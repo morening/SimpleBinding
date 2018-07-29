@@ -11,5 +11,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.FIELD)
 public @interface BindString {
-    String value();
+    int resId() default 0;
+    String value() default "";
 }

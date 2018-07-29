@@ -145,9 +145,16 @@ public class AnnotationProcessor extends AbstractProcessor{
                         }
                     } else if (typeEntryKey == BindString.class){
                         String value = element.getAnnotation(BindString.class).value();
-                        constructorBuilder.addStatement("target.$L = $S",
-                                objectName,
-                                value);
+                        int resId = element.getAnnotation(BindString.class).resId();
+                        if (!"".equals(value)){
+                            constructorBuilder.addStatement("target.$L = $S",
+                                    objectName,
+                                    value);
+                        } else if (resId != 0){
+                            constructorBuilder.addStatement("target.$L = target.getString($L)",
+                                    objectName,
+                                    resId);
+                        }
                     }
                 }
             }
@@ -214,8 +221,9 @@ public class AnnotationProcessor extends AbstractProcessor{
             bindingElement.element = element;
             bindingElement.objectName = element.getSimpleName().toString();
 
-            String str = element.getAnnotation(BindString.class).value();
-            if (str == null){
+            String value = element.getAnnotation(BindString.class).value();
+            int resId = element.getAnnotation(BindString.class).resId();
+            if ("".equals(value) && resId == 0){
                 throw new IllegalArgumentsException(
                         "Binding element should be attached with a String object!");
             }

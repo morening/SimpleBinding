@@ -20,6 +20,9 @@ public class MainActivity extends Activity {
     @BindString(value = "Hello SimpleBinding~")
     String result;
 
+    @BindString(resId = R.string.app_name)
+    String message;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
