@@ -41,7 +41,6 @@ public class AnnotationProcessor extends AbstractProcessor{
 
     private static final ClassName VIEW =  ClassName.get("android.view", "View");
     private static final ClassName UNBINDER = ClassName.get("com.morening.android.simplebinding", "Unbinder");
-    private static final ClassName ONCLICKLISTENER = ClassName.get("android.view.View", "OnClickListener");
 
     private Messager mMessager = null;
     private Filer mFiler = null;
@@ -113,7 +112,6 @@ public class AnnotationProcessor extends AbstractProcessor{
 
                     if (typeEntryKey == OnClick.class){
                         ListenerClass listener = typeEntryKey.getAnnotation(ListenerClass.class);
-                        String targetType = listener.targetType();
                         String setter = listener.setter();
                         String type = listener.type();
                         ListenerMethod[] methods = listener.methods();
