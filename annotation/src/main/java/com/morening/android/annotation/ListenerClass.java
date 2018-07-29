@@ -9,7 +9,6 @@ import java.lang.annotation.Target;
  * Created by morening on 2018/7/26.
  */
 
-@SuppressWarnings("unused")
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface ListenerClass {
