@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
 
 
     @OnClick(id = {R.id.click_btn0, R.id.click_btn1, R.id.click_btn2})
-    public void showToast(View view){
+    public void showToast(View view, Object obj){
         Toast.makeText(MainActivity.this, "Clicked "+view.getId(), Toast.LENGTH_LONG).show();
     }
 

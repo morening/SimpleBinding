@@ -15,7 +15,7 @@ public class HomeActivity extends Activity {
     }
 
     @OnClick(id = R.id.back_btn)
-    public void backToMain(View view){
+    public void backToMain(){
         finish();
     }
 }

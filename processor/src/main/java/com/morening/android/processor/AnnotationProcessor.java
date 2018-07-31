@@ -32,8 +32,11 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -111,6 +114,10 @@ public class AnnotationProcessor extends AbstractProcessor{
                     String objectName = bindingElement.objectName;
 
                     if (typeEntryKey == OnClick.class){
+                        if (!(element instanceof ExecutableElement) || element.getKind() != ElementKind.METHOD) {
+                            throw new IllegalStateException("@OnClick annotation must be on a method.");
+                        }
+
                         ListenerClass listener = typeEntryKey.getAnnotation(ListenerClass.class);
                         String setter = listener.setter();
                         String type = listener.type();
@@ -127,7 +134,25 @@ public class AnnotationProcessor extends AbstractProcessor{
                                 for (String parameter: method.parameters()){
                                     methodBuilder.addParameter(convert2ClassName(parameter), "view");
                                 }
-                                methodBuilder.addStatement("target.$L(view)", objectName);
+                                ExecutableElement executableElement = (ExecutableElement) element;
+                                List<? extends VariableElement> variableElements = executableElement.getParameters();
+                                if (variableElements.size() == 0){
+                                    methodBuilder.addStatement("target.$L()", objectName);
+                                } else {
+                                    StringBuilder variables = new StringBuilder();
+                                    for (VariableElement variableElement: variableElements){
+                                        String variableElementName =
+                                                variableElement.getSimpleName().toString();
+                                        if (VIEW.simpleName().equalsIgnoreCase(variableElementName)){
+                                            variables.append("view");
+                                        } else {
+                                            variables.append("null");
+                                        }
+                                        variables.append(",");
+                                    }
+                                    methodBuilder.addStatement("target.$L($L)", objectName, variables.toString().substring(0, variables.toString().length()-1));
+                                }
+
                                 listenerBuilder.addMethod(methodBuilder.build());
                             }
 
@@ -320,12 +345,18 @@ public class AnnotationProcessor extends AbstractProcessor{
 
     private String getPackageName(String className){
         int lastIndex = className.lastIndexOf(".");
+        if (lastIndex == -1){
+            return className;
+        }
 
         return className.substring(0, lastIndex);
     }
 
     private String getSimpleName(String className){
         int lastIndex = className.lastIndexOf(".");
+        if (lastIndex == -1){
+            return className;
+        }
 
         return className.substring(lastIndex+1);
     }
