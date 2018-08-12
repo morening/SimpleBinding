@@ -43,7 +43,7 @@ import javax.tools.Diagnostic;
 public class AnnotationProcessor extends AbstractProcessor{
 
     private static final ClassName VIEW =  ClassName.get("android.view", "View");
-    private static final ClassName UNBINDER = ClassName.get("com.morening.android.simplebinding", "Unbinder");
+    private static final ClassName UNBINDER = ClassName.get("com.morening.simplebinding", "Unbinder");
 
     private Messager mMessager = null;
     private Filer mFiler = null;
@@ -195,7 +195,7 @@ public class AnnotationProcessor extends AbstractProcessor{
                     .build();
 
             try {
-                JavaFile javaFile = JavaFile.builder("com.morening.android.simplebinding", clazzSpecBuilder.build())
+                JavaFile javaFile = JavaFile.builder("com.morening.simplebinding", clazzSpecBuilder.build())
                         .addFileComment("This Java file was created by SimpleBingding.\nPlease don't edit it.")
                         .build();
                 javaFile.writeTo(mFiler);

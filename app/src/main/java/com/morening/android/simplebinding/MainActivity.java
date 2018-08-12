@@ -6,9 +6,11 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.morening.android.annotation.BindString;
-import com.morening.android.annotation.BindView;
-import com.morening.android.annotation.OnClick;
+import com.morening.annotation.BindString;
+import com.morening.annotation.BindView;
+import com.morening.annotation.OnClick;
+import com.morening.simplebinding.SimpleBinding;
+import com.morening.simplebinding.Unbinder;
 
 public class MainActivity extends Activity {
 

@@ -23,12 +23,18 @@ android {
     }
 }
 
+repositories {
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation project(':simplebinding')
-    implementation project(':annotation')
-    annotationProcessor project(':processor')
+    implementation 'com.github.morening.SimpleBinding:simplebinding:0.0.2'
+    implementation 'com.github.morening.SimpleBinding:annotation:0.0.2'
+    annotationProcessor 'com.github.morening.SimpleBinding:processor:0.0.2'
 }

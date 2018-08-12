@@ -2,9 +2,8 @@ package com.morening.android.simplebinding;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 
-import com.morening.android.annotation.OnClick;
+import com.morening.annotation.OnClick;
 
 public class HomeActivity extends Activity {
 
