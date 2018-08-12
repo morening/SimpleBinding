@@ -195,7 +195,7 @@ public class AnnotationProcessor extends AbstractProcessor{
                     .build();
 
             try {
-                JavaFile javaFile = JavaFile.builder("com.morening.simplebinding", clazzSpecBuilder.build())
+                JavaFile javaFile = JavaFile.builder(packageName, clazzSpecBuilder.build())
                         .addFileComment("This Java file was created by SimpleBingding.\nPlease don't edit it.")
                         .build();
                 javaFile.writeTo(mFiler);
