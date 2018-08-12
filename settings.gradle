@@ -1,3 +1,2 @@
-include ':app'
-include ':annotation', ':processor'
-include ':simplebinding'
+//include ':app'
+include ':simplebinding', ':annotation', ':processor'

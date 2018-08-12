@@ -1,4 +1,4 @@
-package com.morening.android.simplebinding;
+package com.morening.simplebinding;
 
 import android.app.Activity;
 import android.view.View;

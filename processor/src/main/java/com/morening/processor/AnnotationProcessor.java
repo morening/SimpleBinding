@@ -1,14 +1,14 @@
-package com.morening.android.processor;
+package com.morening.processor;
 
-import com.morening.android.annotation.BindString;
-import com.morening.android.annotation.BindView;
-import com.morening.android.annotation.ListenerClass;
-import com.morening.android.annotation.ListenerMethod;
-import com.morening.android.annotation.OnClick;
-import com.morening.android.processor.element.BindingElement;
-import com.morening.android.processor.element.EnclosingElementBinding;
-import com.morening.android.processor.element.TypeElementBinding;
-import com.morening.android.processor.exception.IllegalArgumentsException;
+import com.morening.annotation.BindString;
+import com.morening.annotation.BindView;
+import com.morening.annotation.ListenerClass;
+import com.morening.annotation.ListenerMethod;
+import com.morening.annotation.OnClick;
+import com.morening.processor.element.BindingElement;
+import com.morening.processor.element.EnclosingElementBinding;
+import com.morening.processor.element.TypeElementBinding;
+import com.morening.processor.exception.IllegalArgumentsException;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;

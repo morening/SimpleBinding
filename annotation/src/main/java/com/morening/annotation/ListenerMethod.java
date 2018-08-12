@@ -1,4 +1,4 @@
-package com.morening.android.annotation;
+package com.morening.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,19 +8,15 @@ import java.lang.annotation.Target;
 /**
  * Created by morening on 2018/7/26.
  */
-
-@SuppressWarnings("unused")
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface ListenerClass {
+public @interface ListenerMethod {
 
-    String targetType();
+    String name();
 
-    String setter();
+    String[] parameters() default {};
 
-    String remover() default "";
+    String returnType() default "void";
 
-    String type();
-
-    ListenerMethod[] methods() default {};
+    String defaultReturn() default "null";
 }

@@ -5,12 +5,11 @@
       <GradleProjectSettings>
         <option name="distributionType" value="LOCAL" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="/Applications/gradle-4.4" />
+        <option name="gradleHome" value="/Applications/gradle/gradle-4.4" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/annotation" />
-            <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/processor" />
             <option value="$PROJECT_DIR$/simplebinding" />
           </set>

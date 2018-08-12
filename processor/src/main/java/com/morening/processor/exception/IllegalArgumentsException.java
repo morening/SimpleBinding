@@ -1,4 +1,4 @@
-package com.morening.android.processor.exception;
+package com.morening.processor.exception;
 
 /**
  * Created by morening on 2018/7/24.

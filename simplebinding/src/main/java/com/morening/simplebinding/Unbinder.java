@@ -1,4 +1,4 @@
-package com.morening.android.simplebinding;
+package com.morening.simplebinding;
 
 /**
  * Created by morening on 2018/7/19.
